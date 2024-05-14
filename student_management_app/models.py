@@ -3,14 +3,14 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-
-
 class SessionYearModel(models.Model):
     id = models.AutoField(primary_key=True)
     session_start_year = models.DateField()
     session_end_year = models.DateField()
     objects = models.Manager()
 
+    def __str__(self):
+        return f"{self.session_start_year.year} - {self.session_end_year.year}"
 
 
 # Overriding the Default Django Auth User and adding One More Field (user_type)
@@ -183,8 +183,14 @@ def create_user_profile(sender, instance, created, **kwargs):
         if instance.user_type == 2:
             Staffs.objects.create(admin=instance)
         if instance.user_type == 3:
-            Students.objects.create(admin=instance, course_id=Courses.objects.get(id=1), session_year_id=SessionYearModel.objects.get(id=1), address="", profile_pic="", gender="")
-    
+            # Fetch all available courses and session years
+            courses = Courses.objects.all()
+            session_years = SessionYearModel.objects.all()
+            # If there are courses and session years available, use the first one as default
+            default_course = courses.first() if courses else None
+            default_session_year = session_years.first() if session_years else None
+            # Create student with default course and session year
+            Students.objects.create(admin=instance, course_id=default_course, session_year_id=default_session_year, address="", profile_pic="", gender="")
 
 @receiver(post_save, sender=CustomUser)
 def save_user_profile(sender, instance, **kwargs):
@@ -194,6 +200,3 @@ def save_user_profile(sender, instance, **kwargs):
         instance.staffs.save()
     if instance.user_type == 3:
         instance.students.save()
-    
-
-

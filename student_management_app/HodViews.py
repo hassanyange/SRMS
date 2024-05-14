@@ -327,13 +327,15 @@ def add_student(request):
     }
     return render(request, 'hod_template/add_student_template.html', context)
 
-
 def add_student_save(request):
-    if request.method == "POST":
+    if request.method != "POST":
+        messages.error(request, "Invalid Method ")
+        return redirect('add_student')
+    else:
         form = AddStudentForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                # Extracting cleaned data from the form
+                # Extract cleaned data from the form
                 cleaned_data = form.cleaned_data
                 username = cleaned_data['username']
                 email = cleaned_data['email']
@@ -341,10 +343,10 @@ def add_student_save(request):
                 first_name = cleaned_data['first_name']
                 last_name = cleaned_data['last_name']
                 address = cleaned_data['address']
+                gender = cleaned_data['gender']
                 session_year_id = cleaned_data['session_year_id']
                 course_id = cleaned_data['course_id']
-                gender = cleaned_data['gender']
-                
+
                 # Check if email or username already exists
                 if CustomUser.objects.filter(email=email).exists():
                     messages.error(request, "Email already exists.")
@@ -372,28 +374,16 @@ def add_student_save(request):
                     course_id=Courses.objects.get(id=course_id)
                 )
 
-                # Save profile picture if provided
-                if 'profile_pic' in request.FILES:
-                    profile_pic = request.FILES['profile_pic']
-                    fs = FileSystemStorage()
-                    filename = fs.save(profile_pic.name, profile_pic)
-                    student.profile_pic = fs.url(filename)
-                    student.save()
-
                 messages.success(request, "Student added successfully!")
                 return redirect('add_student')
-                
+
             except Exception as e:
-                print(e)  # Output the exception for debugging
-                messages.error(request, "Failed to add student. Please try again.")
+                messages.error(request, f"Failed to add student: {e}")
                 return redirect('add_student')
 
         else:
             messages.error(request, "Form is invalid. Please check the entered data.")
             return redirect('add_student')
-    else:
-        messages.error(request, "Invalid method.")
-        return redirect('add_student')
 
         
 
