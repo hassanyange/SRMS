@@ -7,9 +7,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core import serializers
 import json
 
-from student_management_app.models import CustomUser, Staffs, Courses, Subjects, Students, SessionYearModel, FeedBackStudent, FeedBackStaffs, LeaveReportStudent, LeaveReportStaff, Attendance, AttendanceReport
+from student_management_app.models import CustomUser, Staffs, Courses, Subjects, Students, SessionYearModel
 from .forms import AddStudentForm, EditStudentForm
-
 
 def admin_home(request):
     all_student_count = Students.objects.all().count()
@@ -39,35 +38,6 @@ def admin_home(request):
         subject_list.append(subject.subject_name)
         student_count_list_in_subject.append(student_count)
     
-    # For Saffs
-    staff_attendance_present_list=[]
-    staff_attendance_leave_list=[]
-    staff_name_list=[]
-
-    staffs = Staffs.objects.all()
-    for staff in staffs:
-        subject_ids = Subjects.objects.filter(staff_id=staff.admin.id)
-        attendance = Attendance.objects.filter(subject_id__in=subject_ids).count()
-        leaves = LeaveReportStaff.objects.filter(staff_id=staff.id, leave_status=1).count()
-        staff_attendance_present_list.append(attendance)
-        staff_attendance_leave_list.append(leaves)
-        staff_name_list.append(staff.admin.first_name)
-
-    # For Students
-    student_attendance_present_list=[]
-    student_attendance_leave_list=[]
-    student_name_list=[]
-
-    students = Students.objects.all()
-    for student in students:
-        attendance = AttendanceReport.objects.filter(student_id=student.id, status=True).count()
-        absent = AttendanceReport.objects.filter(student_id=student.id, status=False).count()
-        leaves = LeaveReportStudent.objects.filter(student_id=student.id, leave_status=1).count()
-        student_attendance_present_list.append(attendance)
-        student_attendance_leave_list.append(leaves+absent)
-        student_name_list.append(student.admin.first_name)
-
-
     context={
         "all_student_count": all_student_count,
         "subject_count": subject_count,
@@ -78,12 +48,6 @@ def admin_home(request):
         "student_count_list_in_course": student_count_list_in_course,
         "subject_list": subject_list,
         "student_count_list_in_subject": student_count_list_in_subject,
-        "staff_attendance_present_list": staff_attendance_present_list,
-        "staff_attendance_leave_list": staff_attendance_leave_list,
-        "staff_name_list": staff_name_list,
-        "student_attendance_present_list": student_attendance_present_list,
-        "student_attendance_leave_list": student_attendance_leave_list,
-        "student_name_list": student_name_list,
     }
     return render(request, "hod_template/home_content.html", context)
 
@@ -327,11 +291,10 @@ def add_student(request):
     }
     return render(request, 'hod_template/add_student_template.html', context)
 
+from django.shortcuts import redirect
+
 def add_student_save(request):
-    if request.method != "POST":
-        messages.error(request, "Invalid Method ")
-        return redirect('add_student')
-    else:
+    if request.method == "POST":
         form = AddStudentForm(request.POST, request.FILES)
         if form.is_valid():
             try:
@@ -349,11 +312,9 @@ def add_student_save(request):
 
                 # Check if email or username already exists
                 if CustomUser.objects.filter(email=email).exists():
-                    messages.error(request, "Email already exists.")
-                    return redirect('add_student')
+                    raise ValueError("Email already exists.")
                 if CustomUser.objects.filter(username=username).exists():
-                    messages.error(request, "Username already exists.")
-                    return redirect('add_student')
+                    raise ValueError("Username already exists.")
 
                 # Create CustomUser instance (student)
                 user = CustomUser.objects.create_user(
@@ -366,12 +327,14 @@ def add_student_save(request):
                 )
 
                 # Create Students instance and associate with CustomUser
-                student = Students.objects.create(
+                course_instance = Courses.objects.get(id=course_id.id)
+                session_year_instance = SessionYearModel.objects.get(id=session_year_id.id)
+                Students.objects.create(
                     admin=user,
                     gender=gender,
                     address=address,
-                    session_year_id=SessionYearModel.objects.get(id=session_year_id),
-                    course_id=Courses.objects.get(id=course_id)
+                    session_year_id=session_year_instance,
+                    course_id=course_instance
                 )
 
                 messages.success(request, "Student added successfully!")
@@ -379,13 +342,10 @@ def add_student_save(request):
 
             except Exception as e:
                 messages.error(request, f"Failed to add student: {e}")
-                return redirect('add_student')
+    else:
+        messages.error(request, "Invalid Method ")
+    return redirect('add_student')
 
-        else:
-            messages.error(request, "Form is invalid. Please check the entered data.")
-            return redirect('add_student')
-
-        
 
 def manage_student(request):
     students = Students.objects.all()
