@@ -55,10 +55,9 @@ def admin_home(request):
 def add_staff(request):
     return render(request, "hod_template/add_staff_template.html")
 
-
 def add_staff_save(request):
     if request.method != "POST":
-        messages.error(request, "Invalid Method ")
+        messages.error(request, "Invalid Method")
         return redirect('add_staff')
     else:
         first_name = request.POST.get('first_name')
@@ -69,14 +68,28 @@ def add_staff_save(request):
         address = request.POST.get('address')
 
         try:
-            user = CustomUser.objects.create_user(username=username, password=password, email=email, first_name=first_name, last_name=last_name, user_type=2)
-            user.staffs.address = address
-            user.save()
+            user = CustomUser.objects.create_user(
+                username=username, 
+                password=password, 
+                email=email, 
+                first_name=first_name, 
+                last_name=last_name, 
+                user_type=2
+            )
+            Staffs.objects.create(
+                admin=user,
+                address=address
+            )
             messages.success(request, "Staff Added Successfully!")
             return redirect('add_staff')
-        except:
-            messages.error(request, "Failed to Add Staff!")
-            return redirect('add_staff')
+        except CustomUser.DoesNotExist:
+            messages.error(request, "Failed to create user, CustomUser model error.")
+        except Staffs.DoesNotExist:
+            messages.error(request, "Failed to create staff, Staffs model error.")
+        except Exception as e:
+            messages.error(request, f"An error occurred: {e}")
+        
+        return redirect('add_staff')
 
 
 
