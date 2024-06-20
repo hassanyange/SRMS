@@ -1,7 +1,7 @@
 {% extends 'student_template/base_template.html' %}
 
 {% block page_title %}
-    Student Home
+    Parent Home
 {% endblock page_title %}
 
 {% block main_content %}
@@ -9,33 +9,29 @@
 {% load static %}
 
 <section class="content">
-        <div class="container-fluid">
+    <div class="container-fluid">
 
-            {% comment %} Boxes Section Starts {% endcomment %}
-            <div class="row">
-                <div class="col-lg-6 col-6 center">
-                    <!-- small box -->
-                    <div class="small-box bg-info">
-                    <div class="inner">
-                        <h3> <i class="nav-icon fas fa-tasks"></i></h3>
-                      <h2> <a href="{{ student_view_result }}" class="text-white">View Results</a> </h2>
-                        
-                    </div>
-                    <div class="icon">
-                        <i class="ion ion-stats-bars"></i>
-                    </div>
-                    <a href="{{ student_view_result }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-                    
+        <!-- Parent Information Section Starts -->
+        <div class="row">
+            <div class="col-lg-12 col-12">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Hello, Parents,</h5>
+                        <p class="card-text">
+                            
+
+        You can now check your child's results in this page.
+         We value your feedback on the results and will respond promptly to any comments or concerns you may have.
+
+         Thank you!
+                        </p>
                     </div>
                 </div>
-           
-              
-      
-                </div>
-            {% comment %} Boxes Section Ends {% endcomment %}
+            </div>
+        </div>
+        <!-- Parent Information Section Ends -->
 
-            
-        </div><!-- /.container-fluid -->
-      </section>
+    </div><!-- /.container-fluid -->
+</section>
 
-  {% endblock main_content %}
+{% endblock main_content %}
